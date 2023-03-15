@@ -2,7 +2,7 @@ import string
 
 
 class Token:
-    def __init__(self, type, value=None):
+    def __init__(self, type: str, value: str =None):
         self.type = type
         self.value = value
 
@@ -54,6 +54,16 @@ p1.out = {t2 : 5}
 
 ->
 
+#all required tokens
+<datatype : name="place"> <var : name="p1"> <comma> <var : name="p2">
+<datatype : name="tran">  <var : name="t1"> <comma> <var : name="t2">
+<var : name="p1"> <point> <keyword : name="amm"> <equal> <number : val=3>
+<var : name="p2"> <point> <keyword : name="cap"> <equal> <number : val=4>
+<var : name="t1"> <point> <keyword : name="out"> <equal> <leftbracket> <var ; name="p1"> <colon> <number : val=2> <comma> <var : name="p2"> <colon> <number : val=1> <rightbracket>
+<var : name="p1"> <point> <keyword : name="out"> <equal> <leftbracket> <var ; name="t2"> <colon> <number : val=5> <rightbracket>
+
+->
+
 <datatype : name="place"> <var : name="p1">, <var : name="p2">;
 <datatype : name="tran">  <var : name="t1">, <var : name="t2">;
 <var : name="p1">.amm = <number: val=3>;
@@ -95,6 +105,7 @@ Methods
 2. tokenize
 3. merge tokens into declarations
 '''
+
 DIGITS = '0123456789'
 LETTERS = string.ascii_letters
 CHARS = LETTERS + DIGITS + '_'
@@ -103,7 +114,9 @@ KEYWORDS = [
     'place',
     'tran',
     'amm',
-    'cap'
+    'cap',
+    'in',
+    'out'
 ]
 
 # TOKENS
@@ -112,16 +125,112 @@ TT_LBRACKET = 'LBRACKET'
 TT_RBRACKET = 'RBRACKET'
 TT_KEYWORD = 'KEYWORD'
 TT_COMMA = 'COMMA'
-TT_NEWLINE = 'NEWLINE'
 TT_DOT = 'DOT'
 TT_EQUAL = 'EQUAL'
 TT_COLON = 'COLON'
-TT_SEMICOLON = 'SEMICOLON'
+TT_DATATYPE = 'DATATYPE'
+TT_VAR = 'VAR'
+TT_NUMBER = 'NUMBER'
+TT_UNDEFINED = 'UNDEFINED'
 
-def declaration_splitter(code_string: str):
-    declarations = code_string.replace('\n','').split(';')[:-1]
-    for declaration in declarations:
-        print(declaration)
+class TokenCases:
+    def lbracket(self, value=None):
+        return Token(TT_LBRACKET)
+    def rbracket(self, value=None):
+        return Token(TT_RBRACKET)
+    def comma(self, value=None):
+        return Token(TT_COMMA)
+    def keyword(self, value: str):
+        return Token(TT_KEYWORD, value)
+    def dot(self, value=None):
+        return Token(TT_DOT)
+    def equal(self, value=None):
+        return Token(TT_EQUAL)
+    def colon(self, value=None):
+        return Token(TT_COLON)
+    def datatype(self, value: str):
+        return Token(TT_DATATYPE, value)
 
-example = open("petrinets/example.txt", 'r')
-declaration_splitter(example.read())
+    TOKEN_DICTIONARY = {
+        '{' : lbracket,
+        '}' : rbracket,
+        ',' : comma,
+        '.' : dot,
+        '=' : equal,
+        ':' : colon,
+        'place' : datatype,
+        'tran' : datatype,
+        'amm' : keyword,
+        'cap' : keyword,
+        'in' : keyword,
+        'out' : keyword,
+    }
+
+    def token_switch(self, string):
+        case = self.TOKEN_DICTIONARY.get(string)
+        if case == None:
+            return None
+        else:
+            return case(string, string)
+
+class Lexer:
+
+    def declaration_splitter(self, code_text: str):
+        return code_text.replace('\n','').split(';')[:-1]
+
+    def var_identifier(self, string):
+        if string[0] not in LETTERS:
+            return False
+        for char in string:
+            if char not in CHARS:
+                return False
+        return True
+
+    def number_identifier(self, string):
+        if string[0] == '0':
+            return False
+        for char in string:
+            if char not in DIGITS:
+                return False
+        return True
+
+    def tokenize_declaration(self, declaration: str):
+        tokens = list()
+        i = 0
+        j = 1
+        length = len(declaration)
+        while j <= length:
+            if declaration[i] == ' ':
+                i += 1
+                j += 1
+            token = TokenCases().token_switch(declaration[i:j])
+            if type(token) == Token:
+                tokens.append(token)
+                i = j
+                j = i+1
+            elif j == length:
+                if self.var_identifier(declaration[i:j]):
+                    tokens.append(Token(TT_VAR, declaration[i:j]))
+                if self.number_identifier(declaration[i:j]):
+                    tokens.append(Token(TT_NUMBER, int(declaration[i:j])))
+                i = j
+                j = i+1
+            elif declaration[j] in ',. :}{':
+                if self.var_identifier(declaration[i:j]):
+                    tokens.append(Token(TT_VAR, declaration[i:j]))
+                if self.number_identifier(declaration[i:j]):
+                    tokens.append(Token(TT_NUMBER, int(declaration[i:j])))
+                i = j
+                j = i+1
+            else:
+                j += 1
+        return tokens
+    
+    def tokenizer(self, code_text: list):
+        return [self.tokenize_declaration(declaration) for declaration in self.declaration_splitter(code_text)]
+
+lexer = Lexer()
+example = open("petrinets/example.txt", 'r').read()
+print(example)
+for i in lexer.tokenizer(example):
+    print(i)
