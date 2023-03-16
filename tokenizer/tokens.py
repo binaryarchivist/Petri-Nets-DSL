@@ -11,6 +11,7 @@ HUIOZNAET = ':'  # sorry Vlad eu am uitat ce inseamna ;(
 
 # Delimiters
 COMMA = ","
+DOT = "."
 SEMICOLON = ";"
 LPAREN = "("
 RPAREN = ")"

@@ -47,6 +47,8 @@ class Tokenizer:
             tok = Token(token.LPAREN, self.ch)
         elif self.ch == ',':
             tok = Token(token.COMMA, self.ch)
+        elif self.ch == '.':
+            tok = Token(token.DOT, self.ch)
         elif self.ch == '{':
             tok = Token(token.LBRACE, self.ch)
         elif self.ch == '}':
