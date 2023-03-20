@@ -67,7 +67,7 @@ class Tokenizer:
             if is_digit(self.ch) and self.ch != '0':
                 tok.literal = self.read_number()
                 tok.type = token.INT
-                return Token(token.INT, self.read_number())
+                return Token(token.INT, tok.literal)
 
             tok = Token(token.ILLEGAL, self.ch)
 

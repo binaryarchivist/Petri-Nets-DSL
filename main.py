@@ -1,5 +1,5 @@
 from tokenizer import Tokenizer
-
+from parserer import Parser
 
 class TestTokenizer:
     def test_next_token(self) -> any:
@@ -13,12 +13,15 @@ class TestTokenizer:
 
         tokenizer: Tokenizer = Tokenizer(input)
         tok = tokenizer.next_token()
+        tokens = [tok]
 
         while tok.type != 'EOF':
-            print(tok)
             tok = tokenizer.next_token()
-
-
+            tokens.append(tok)
+        return tokens
+    
 test: TestTokenizer = TestTokenizer()
 
-test.test_next_token()
+tokens = test.test_next_token()
+for i in Parser(tokens).parsify():
+    print(i)
