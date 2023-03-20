@@ -1,14 +1,6 @@
 import tokens as token
 
 
-def is_letter(ch: str) -> bool:
-    return 'a' <= ch <= 'z' or 'A' <= ch <= 'Z' or ch == '_'
-
-
-def is_digit(ch: str) -> bool:
-    return '0' <= ch <= '9'
-
-
 class Tokenizer:
     def __init__(self, input: str) -> any:
         self.input: str = input  # input text
@@ -51,7 +43,7 @@ class Tokenizer:
             tok = Token(token.SEMICOLON)
         elif self.ch == ',':
             tok = Token(token.COMMA)
-        elif self.ch == '.': #extend for fields (amm, cap, in, out)
+        elif self.ch == '.':  # extend for fields (amm, cap, in, out)
             tok = Token(token.DOT)
         elif self.ch == '{':
             tok = Token(token.LBRACE)
@@ -105,3 +97,11 @@ class Token:
         if self.literal:
             return f'Type {self.type} : Literal {self.literal}'
         return f'Type {self.type}'
+
+
+def is_letter(ch: str) -> bool:
+    return 'a' <= ch <= 'z' or 'A' <= ch <= 'Z' or ch == '_'
+
+
+def is_digit(ch: str) -> bool:
+    return '0' <= ch <= '9'
