@@ -7,20 +7,18 @@ INT = "INT"  # 123456789
 
 # OPERATORS
 ASSIGN = "="
-HUIOZNAET = ':'  # sorry Vlad eu am uitat ce inseamna ;(
 
 # Delimiters
 COMMA = ","
 DOT = "."
 SEMICOLON = ";"
-LPAREN = "("
-RPAREN = ")"
 LBRACE = "{"
 RBRACE = "}"
+COLON = ':'
 
 # Keywords
-PLACE = "place"
-TRAN = "tran"
+PLACE = "PLACE"
+TRAN = "TRAN"
 
 keywords: dict = {
     "place": PLACE,
