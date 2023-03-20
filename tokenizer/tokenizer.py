@@ -1,6 +1,14 @@
 import tokens as token
 
 
+def is_letter(ch: str) -> bool:
+    return 'a' <= ch <= 'z' or 'A' <= ch <= 'Z' or ch == '_'
+
+
+def is_digit(ch: str) -> bool:
+    return '0' <= ch <= '9'
+
+
 class Tokenizer:
     def __init__(self, input: str) -> any:
         self.input: str = input  # input text
@@ -56,11 +64,11 @@ class Tokenizer:
         elif self.ch == 0:
             tok = Token(token.EOF, "")
         else:
-            if self.is_letter(self.ch):
+            if is_letter(self.ch):
                 tok.literal = self.read_identifier()
                 tok.type = token.lookup_ident(tok.literal)
                 return tok
-            elif self.is_digit(self.ch):
+            elif is_digit(self.ch):
                 tok.literal = self.read_number()
                 tok.type = token.INT
                 return tok
@@ -74,7 +82,7 @@ class Tokenizer:
     def read_identifier(self) -> str:
         cursor: int = self.cursor
 
-        while self.is_letter(self.ch):
+        while is_letter(self.ch):
             self.read_char()
 
         return self.input[cursor: self.cursor]
@@ -82,7 +90,7 @@ class Tokenizer:
     def read_number(self) -> str:
         cursor: int = self.cursor
 
-        while self.is_digit(self.ch):
+        while is_digit(self.ch):
             self.read_char()
 
         return self.input[cursor: self.cursor]
@@ -90,12 +98,6 @@ class Tokenizer:
     def consume_whitespace(self) -> any:
         while self.ch == ' ' or self.ch == '\t' or self.ch == '\n' or self.ch == '\r':
             self.read_char()
-
-    def is_letter(self, ch: str) -> bool:
-        return 'a' <= ch and ch <= 'z' or 'A' <= ch and ch <= 'Z' or ch == '_'
-
-    def is_digit(self, ch: str) -> bool:
-        return '0' <= ch and ch <= '9'
 
 
 TokenType = str
