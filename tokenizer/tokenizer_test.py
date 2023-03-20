@@ -1,15 +1,15 @@
-from tokenizer import Token, Tokenizer
+from tokenizer import Tokenizer
 
 
 class TestTokenizer:
     def test_next_token(self) -> any:
         input: str = """
-        place p_first, p_second;
-        tran t_first, t_second;
-        p_first.amm = 3;
-        p_second.cap = 4;
-        t_first.out = {p_first : 2, p_second};
-        p_first.out = {t_second : 5};"""
+        place p1, p2;
+        tran t1, t2;
+        p1.amm = 3;
+        p2.cap = 4;
+        t1.out = {p1 : 2, p2};
+        p1.out = {t2 : 5};"""
 
         tokenizer: Tokenizer = Tokenizer(input)
         tok = tokenizer.next_token()

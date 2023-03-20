@@ -36,34 +36,28 @@ class Tokenizer:
 
         # daca nu intelegi ce se intampla ibu eu cum sa explic ...
         if self.ch == "=":
-            tok = Token(token.ASSIGN, self.ch)
+            tok = Token(token.ASSIGN)
         elif self.ch == ':':
-            tok = Token(token.HUIOZNAET, self.ch)
+            tok = Token(token.COLON)
         elif self.ch == ';':
-            tok = Token(token.SEMICOLON, self.ch)
-        elif self.ch == ')':
-            tok = Token(token.RPAREN, self.ch)
-        elif self.ch == '(':
-            tok = Token(token.LPAREN, self.ch)
+            tok = Token(token.SEMICOLON)
         elif self.ch == ',':
-            tok = Token(token.COMMA, self.ch)
-        elif self.ch == '.':
-            tok = Token(token.DOT, self.ch)
+            tok = Token(token.COMMA)
+        elif self.ch == '.': #extend for fields (amm, cap, in, out)
+            tok = Token(token.DOT)
         elif self.ch == '{':
-            tok = Token(token.LBRACE, self.ch)
+            tok = Token(token.LBRACE)
         elif self.ch == '}':
-            tok = Token(token.RBRACE, self.ch)
+            tok = Token(token.RBRACE)
         elif self.ch == 0:
-            tok = Token(token.EOF, "")
+            tok = Token(token.EOF)
         else:
             if self.is_letter(self.ch):
                 tok.literal = self.read_identifier()
                 tok.type = token.lookup_ident(tok.literal)
-                return tok
-            elif self.is_digit(self.ch):
-                tok.literal = self.read_number()
-                tok.type = token.INT
-                return tok
+                return Token(tok.type, tok.literal)
+            if self.is_digit(self.ch) and self.ch != '0':
+                return Token(token.INT, self.read_number())
 
             tok = Token(token.ILLEGAL, self.ch)
 
@@ -74,7 +68,7 @@ class Tokenizer:
     def read_identifier(self) -> str:
         cursor: int = self.cursor
 
-        while self.is_letter(self.ch):
+        while self.is_letter(self.ch) or self.is_digit(self.ch):
             self.read_char()
 
         return self.input[cursor: self.cursor]
@@ -87,7 +81,7 @@ class Tokenizer:
 
         return self.input[cursor: self.cursor]
 
-    def consume_whitespace(self) -> any:
+    def consume_whitespace(self) -> None:
         while self.ch == ' ' or self.ch == '\t' or self.ch == '\n' or self.ch == '\r':
             self.read_char()
 
@@ -97,14 +91,12 @@ class Tokenizer:
     def is_digit(self, ch: str) -> bool:
         return '0' <= ch and ch <= '9'
 
-
-TokenType = str
-
-
 class Token:
-    def __init__(self, type: TokenType, literal: str) -> any:
+    def __init__(self, type: str, literal: str = None) -> any:
         self.type = type
         self.literal = literal
 
     def __str__(self) -> str:
-        return f'Type: {self.type} | Literal: {self.literal} '
+        if self.literal:
+            return f'Type {self.type} : Literal {self.literal}'
+        return f'Type {self.type}'
