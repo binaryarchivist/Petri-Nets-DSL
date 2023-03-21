@@ -12,7 +12,7 @@ def error(message=None):
 
 class Instantiation:
 
-    def __init__(self, type: str, varlist: List[str] = []):
+    def __init__(self, type: str, varlist: list[str]):
         self.type = type
         self.varlist = varlist
 
@@ -44,12 +44,12 @@ class Arc:
 
 class Arcing:
 
-    def __init__(self, type: str, arcs: List[Arc] = []):
+    def __init__(self, type: str, arcs: list[Arc]):
         self.type = type
         self.arcs = arcs
 
     def __str__(self):
-        string = f"""Arcing: {self.type} ["""
+        string = f"Arcing: {self.type} ["
         for i in self.arcs:
             string += f"{i}, "
         return string[:-2] + "]"
