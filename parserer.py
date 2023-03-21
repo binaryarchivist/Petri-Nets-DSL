@@ -1,8 +1,10 @@
 from tokenizer import Token
 import tokens as token
 
-def error(message):
-    raise ValueError(message)
+def error(message=None):
+    if error:
+        raise ValueError(message)
+    raise ValueError("Declaration Error")
 
 '''
 <program> -> <declarationlist>,
@@ -73,121 +75,150 @@ class Parser:
         self.tokens = tokens
         self.current_token = None
         self.cursor = -1
+        self.var_dict = {
+            token.PLACE : list(),
+            token.TRAN : list()
+        }
+        self.state = 0
 
     def next_token(self):
         self.cursor += 1
         self.current_token = self.tokens[self.cursor]
         return self.current_token
 
+    def expect(self, state=None, token=None):
+        self.next_token()
+        if state:
+            if self.state == state:
+                pass
+            else:
+                error()
+        if token:
+            if self.current_token.type in token:
+                pass
+            else:
+                error()
+        return True
+
+    def case(self, state=None, token=None):
+        if state:
+            if self.state == state:
+                pass
+            else:
+                return False
+        if token:
+            if self.current_token.type in token:
+                pass
+            else:
+                return False
+        return True
+
+    def var_exists(self, var, raise_error=False):
+        if var in self.var_dict[token.PLACE] or var in self.var_dict[token.TRAN]:
+            if raise_error:
+                error(f"Identifier {var} already exists.")
+
+    def var_not_exist(self, var, raise_error=False):
+        if var not in self.var_dict[token.PLACE] and var not in self.var_dict[token.TRAN]:
+            if raise_error:
+                error(f"Identifier {var} does not exist.")
+
     def parsify(self):
         declaration_list = list()
-        place_list = list()
-        tran_list = list()
-        state = 0
-        while state != -1 and self.next_token().type != token.EOF:
-            #place instantiation
-            if self.current_token.type == token.PLACE:
-                varlist = []
-                while state != -1:
-                    self.next_token()
-                    if state == 0 and self.current_token.type == token.IDENT:
-                        state = 1
-                        if self.current_token.literal in place_list or self.current_token in tran_list:
-                            error(f"Identifier {self.current_token.literal} already exists.")
-                        place_list.append(self.current_token.literal)   
+        self.state = 0
+        while self.next_token().type != token.EOF:
+
+            if self.case(0, [token.PLACE, token.TRAN]):
+                type = self.current_token.type
+                varlist = list()
+
+                while self.next_token():
+
+                    if self.case(0, token.IDENT):
+                        self.state = 1
+                        self.var_exists(self.current_token.literal, True)  
                         varlist.append(self.current_token.literal)
-                    elif state == 1 and self.current_token.type == token.COMMA:
-                        state = 0
-                    elif state == 1 and self.current_token.type == token.SEMICOLON:
-                        state = 0
-                        declaration_list.append(Instantiation(token.PLACE, varlist))
+
+                    elif self.case(1, token.COMMA):
+                        self.state = 0
+
+                    elif self.case(1, token.SEMICOLON):
+                        self.state = 0
+                        declaration_list.append(Instantiation(type, varlist))
+                        self.var_dict[type] += varlist
                         break
+
                     else:
-                        state = -1
-            #transition instantiation
-            elif self.current_token.type == token.TRAN:
-                varlist = []
-                while state != -1:
-                    self.next_token()
-                    if state == 0 and self.current_token.type == token.IDENT:
-                        state = 1
-                        if self.current_token.literal in place_list or self.current_token in tran_list:
-                            error(f"Identifier {self.current_token.literal} already exists.")
-                        tran_list.append(self.current_token.literal)   
-                        varlist.append(self.current_token.literal)
-                    elif state == 1 and self.current_token.type == token.COMMA:
-                        state = 0
-                    elif state == 1 and self.current_token.type == token.SEMICOLON:
-                        state = 0
-                        declaration_list.append(Instantiation(token.TRAN, varlist))
-                        break
-                    else:
-                        state = -1
-            elif self.current_token.type == token.IDENT:
+                        error("Place Instantiation Error")
+
+            elif self.case(0, token.IDENT):
+
                 temp = self.current_token.literal
-                if temp not in place_list and temp not in tran_list:
-                    error(f"Identifier {temp} was not declared.")
-                if state == 0 and self.next_token().type == token.DOT:
-                    self.next_token()
-                    if self.current_token.literal in ["amm", "cap"]:
-                        type = self.current_token.literal
-                        state = 1
-                    elif self.current_token.literal == "in" and temp in place_list or self.current_token.literal == "out" and temp in tran_list:
-                        type = "outbound"
-                        state = 2
-                    elif self.current_token.literal == "in" and temp in tran_list or self.current_token.literal == "out" and temp in place_list:
-                        type = "inbound"
-                        state = 2
-                    else:
-                        error("Declaration Error")
-                    if state != 0 and self.next_token().type == token.ASSIGN:
-                        pass
-                    else:
-                        state = -1
+                self.var_not_exist(temp, True)
+                self.expect(0, token.DOT)
                 self.next_token()
-                if state == 1 and self.current_token.type == token.INT:
+
+                if self.current_token.literal in ["amm", "cap"]:
+                    type = self.current_token.literal
+                    self.state = 1
+                elif self.current_token.literal == "in" and temp in self.var_dict[token.PLACE] or self.current_token.literal == "out" and temp in self.var_dict[token.TRAN]:
+                    type = "outbound"
+                    self.state = 2
+                elif self.current_token.literal == "in" and temp in self.var_dict[token.TRAN] or self.current_token.literal == "out" and temp in self.var_dict[token.PLACE]:
+                    type = "inbound"
+                    self.state = 2
+                else:
+                    error(f"Field Declaration Error. Expected something else after {temp} instead of {self.current_token.literal}.")
+                    
+                self.expect(token = token.ASSIGN)
+                self.next_token()
+
+                #Placefield
+                if self.case(1, token.INT):
                     val = int(self.current_token.literal)
-                    if self.next_token().type == token.SEMICOLON:
-                        state = 0
-                        declaration_list.append(Placefield(type, temp, val))
-                    else:
-                        state = -1
-                elif state == 2 and self.current_token.type == token.LBRACE:
-                    state = 1
+                    self.expect(token=token.SEMICOLON)
+                    self.state = 0
+                    declaration_list.append(Placefield(type, temp, val))
+
+                #Arcing
+                elif self.case(2, token.LBRACE):
+                    self.state = 1
                     arcs = list()
-                    while state != -1:
-                        self.next_token()
-                        if state == 1 and self.current_token.type == token.IDENT:
-                            state = 2
+                    while self.next_token():
+                        val = 1
+
+                        if self.case(1, token.IDENT):
+                            self.var_not_exist(self.current_token.literal, True)
+                            self.state = 2
                             destination = self.current_token.literal
-                        elif state == 2 and self.current_token.type == token.COLON:
-                            state = 3
-                        elif state == 3 and self.current_token.type == token.INT:
-                            state = 4
+                            val = 1
+
+                        elif self.case(2, token.COLON):
+                            self.state = 3
+                            self.expect(token = token.INT)
                             val = int(self.current_token.literal)
-                        elif state == 2 and self.current_token.type == token.COMMA:
-                            state = 1
-                            val = 1
-                        elif state == 4 and self.current_token.type == token.COMMA:
-                            state = 1
-                        elif state == 2 and self.current_token.type == token.RBRACE:
-                            state = 0
-                            val = 1
+                            
+                        elif self.case(3, token.COMMA):
+                            self.state = 1
+
+                        elif self.case(3, token.RBRACE):
+                            self.state = 0
                             break
-                        elif state == 4 and self.current_token.type == token.RBRACE:
-                            state = 0
-                            break
+
                         else:
-                            state = -1
-                        if state == 1:
+                            error()
+
+                        if self.state == 1:
                             arcs.append(Arc(temp, destination, val))
-                    if state == 0 and self.next_token().type == token.SEMICOLON:
+                            val = None
+
+                    if self.state == 0 and self.next_token().type == token.SEMICOLON:
                         arcs.append(Arc(temp, destination, val))
                         declaration_list.append(Arcing(type, list(arcs)))
                         pass
-                    else:
-                        state = -1
+                else:
+                    error("Field Declaration Error. Expected something else after '='.")
             else:
-                error("Declaration Error")
+                error()
         return declaration_list
     
