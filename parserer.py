@@ -1,19 +1,24 @@
+from typing import List
+
 from tokenizer import Token
 import tokens as token
 
-def error(message = None):
+
+def error(message=None):
     if message:
         raise ValueError(message)
     raise ValueError("Declaration Error")
 
+
 class Instantiation:
 
-    def __init__(self, type: str, varlist: list[str] = []):
+    def __init__(self, type: str, varlist: List[str] = []):
         self.type = type
         self.varlist = varlist
 
     def __str__(self):
         return f"Instantiation: {self.type} {self.varlist}"
+
 
 class Placefield:
 
@@ -21,8 +26,10 @@ class Placefield:
         self.type = type
         self.var = var
         self.val = val
+
     def __str__(self):
         return f"Placefield: {self.type} {self.var} {self.val}"
+
 
 class Arc:
 
@@ -30,30 +37,34 @@ class Arc:
         self.source = source
         self.destination = destination
         self.val = val
+
     def __str__(self):
         return f"Arc: {self.source} {self.destination} {self.val}"
 
+
 class Arcing:
 
-    def __init__(self, type: str, arcs: list[Arc] = []):
+    def __init__(self, type: str, arcs: List[Arc] = []):
         self.type = type
         self.arcs = arcs
+
     def __str__(self):
         string = f"""Arcing: {self.type} ["""
         for i in self.arcs:
             string += f"{i}, "
         return string[:-2] + "]"
 
+
 class Parser:
 
-    def __init__(self, tokens: list[Token]):
+    def __init__(self, tokens: List[Token]):
         self.tokens = tokens
         self.current_token = None
         self.cursor = -1
         self.state = 0
         self.var_dict = {
-            token.PLACE : list(),
-            token.TRAN : list()
+            token.PLACE: list(),
+            token.TRAN: list()
         }
 
     def next_token(self):
@@ -89,7 +100,8 @@ class Parser:
             error(f"Identifier {self.current_token.literal} already exists.")
 
     def var_not_exist(self):
-        if self.current_token.literal not in self.var_dict[token.PLACE] and self.current_token.literal not in self.var_dict[token.TRAN]:
+        if self.current_token.literal not in self.var_dict[token.PLACE] and self.current_token.literal not in \
+                self.var_dict[token.TRAN]:
             error(f"Identifier {self.current_token.literal} does not exist.")
 
     def parsify(self):
@@ -105,7 +117,7 @@ class Parser:
 
                     if self.case(0, token.IDENT):
                         self.state = 1
-                        self.var_exists()  
+                        self.var_exists()
                         varlist.append(self.current_token.literal)
 
                     elif self.case(1, token.COMMA):
@@ -147,25 +159,26 @@ class Parser:
                     self.state = 2
                     swap = False
                 else:
-                    error(f"Field Declaration Error. Expected something else after {temp} instead of {self.current_token.literal}.")
-                    
+                    error(
+                        f"Field Declaration Error. Expected something else after {temp} instead of {self.current_token.literal}.")
+
                 self.expect(token.ASSIGN)
                 self.next_token()
 
-                #Placefield
+                # Placefield
                 if self.case(1, token.INT):
                     val = int(self.current_token.literal)
                     self.expect(token.SEMICOLON)
                     self.state = 0
                     declaration_list.append(Placefield(type, temp, val))
 
-                #Arcing
+                # Arcing
                 elif self.case(2, token.LBRACE):
                     self.state = 1
                     arclist = list()
 
                     while self.next_token():
-                        
+
                         if self.case(1, token.IDENT):
                             self.var_not_exist()
                             self.state = 2
@@ -175,20 +188,20 @@ class Parser:
                         elif self.case(2, token.COLON):
                             self.expect(token.INT)
                             val = int(self.current_token.literal)
-                            
+
                         elif self.case(2, [token.COMMA, token.RBRACE]):
                             self.state = 1
                             if swap:
                                 arclist.append(Arc(destination, temp, val))
                             else:
                                 arclist.append(Arc(temp, destination, val))
-                            if self.case(token = token.RBRACE):
+                            if self.case(token=token.RBRACE):
                                 self.state = 0
                                 break
 
                         else:
                             error("Arcing Declaration Error.")
-                    
+
                     self.expect(token.SEMICOLON)
                     declaration_list.append(Arcing(type, list(arclist)))
 

@@ -1,6 +1,7 @@
 from tokenizer import Tokenizer
 from parserer import Parser
 
+
 class TestTokenizer:
     def test_next_token(self) -> any:
         input: str = """
@@ -22,7 +23,8 @@ class TestTokenizer:
             tok = tokenizer.next_token()
             tokens.append(tok)
         return tokens
-    
+
+
 test: TestTokenizer = TestTokenizer()
 
 tokens = test.test_next_token()
