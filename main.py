@@ -2,6 +2,7 @@ from tokenizer import Tokenizer
 from parserer import Parser
 import networkx as nx
 import matplotlib.pyplot as plt
+import pprint
 
 
 class TestTokenizer:
@@ -84,17 +85,12 @@ for i in Parser(tokens).parsify():
                     ]
                 })
 
-G = nx.balanced_tree(2, 5)
-pos = nx.drawing.nx_agraph.graphviz_layout(G)
-G.add_node("main")
 for child in ast:
-    G.add_node(child)
-    G.add_edge(child, "main")
+    pprint.pprint(child)
     for prop in ast[child]:
-        G.add_node(prop)
-        G.add_edge(prop, child)
+        pprint.pprint(prop)
+        pprint.pprint(ast[child][prop])
 
-nx.draw(G, pos, with_labels=True)
-plt.show()
+
 
 
