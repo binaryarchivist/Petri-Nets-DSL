@@ -1,7 +1,5 @@
 from tokenizer import Tokenizer
 from parserer import Parser
-import networkx as nx
-import matplotlib.pyplot as plt
 import pprint
 
 
@@ -12,6 +10,7 @@ class TestTokenizer:
         place p3, p4;
         tran t1, t2;
         p1.amm = 3;
+        p1.cap = 4;
         p2.cap = 4;
         t1.out = {p1 : 2, p2 : 3};
         p1.out = {t2 : 5};
@@ -46,12 +45,14 @@ for i in Parser(tokens).parsify():
     if i.type == 'PLACE':
         for var in i.varlist:
             ast["instantiation"]['place'].append({
-                'name': var
+                'name': var,
+                'props': []
             })
     elif i.type == 'TRAN':
         for var in i.varlist:
             ast["instantiation"]['transition'].append({
-                'name': var
+                'name': var,
+                'props': []
             })
     elif i.type == 'inbound' or i.type == 'outbound':
         arcs = []
@@ -67,6 +68,7 @@ for i in Parser(tokens).parsify():
             if i.var == var['name']:
                 var.update({
                     "props": [
+                        *var["props"],
                         {
                             "type": i.type,
                             "val": i.val
@@ -78,6 +80,7 @@ for i in Parser(tokens).parsify():
                 var.update({
                     "name": var,
                     "props": [
+                        *var["props"],
                         {
                             "type": i.type,
                             "val": i.val
