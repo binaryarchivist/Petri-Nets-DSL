@@ -12,7 +12,7 @@ def error(message=None):
 
 class Instantiation:
 
-    def __init__(self, type: str, varlist: list[str]):
+    def __init__(self, type: str, varlist: List[str]):
         self.type = type
         self.varlist = varlist
 
@@ -44,7 +44,7 @@ class Arc:
 
 class Arcing:
 
-    def __init__(self, type: str, arcs: list[Arc]):
+    def __init__(self, type: str, arcs: List[Arc]):
         self.type = type
         self.arcs = arcs
 
