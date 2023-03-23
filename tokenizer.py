@@ -34,7 +34,6 @@ class Tokenizer:
         tok: Token = Token(token.EOF, "")
         self.consume_whitespace()
 
-        # daca nu intelegi ce se intampla ibu eu cum sa explic ...
         if self.ch == "=":
             tok = Token(token.ASSIGN)
         elif self.ch == ':':
