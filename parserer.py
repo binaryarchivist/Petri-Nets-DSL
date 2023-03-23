@@ -9,6 +9,8 @@ def error(message=None):
         raise ValueError(message)
     raise ValueError("Declaration Error")
 
+#These are all the types of declarations used in the DSL
+#They are broken down to simple attributes that should be contained in the syntax
 
 class Instantiation:
 
@@ -55,6 +57,8 @@ class Arcing:
         return string[:-2] + "]"
 
 
+#Parser class - Constructor takes in the list of tokens produced by the Tokenizer
+
 class Parser:
 
     def __init__(self, tokens: List[Token]):
@@ -67,10 +71,15 @@ class Parser:
             token.TRAN: list()
         }
 
+# "next_token" function - iterates to the next token from the token list.
+
     def next_token(self):
         self.cursor += 1
         self.current_token = self.tokens[self.cursor]
         return self.current_token
+
+# "expect" function - takes in a token type string.
+# Raises error if the current token type does not match.
 
     def expect(self, token):
         temp = self.current_token.type
@@ -80,7 +89,9 @@ class Parser:
                 pass
             else:
                 error(f"Expected something else after {temp}.")
-        return True
+
+# "case" function - takes in a state variable and a token type string.
+# Returns True or False whether they match with the current state and token type.
 
     def case(self, state=None, token=None):
         if state:
@@ -95,23 +106,42 @@ class Parser:
                 return False
         return True
 
+# "var_exists" function - checks if the literal on the current token is in the variable dictionary lists.
+#  Raises error if the variable already exists.
+
     def var_exists(self):
         if self.current_token.literal in self.var_dict[token.PLACE] or self.current_token.literal in self.var_dict[token.TRAN]:
             error(f"Identifier {self.current_token.literal} already exists.")
+
+# "var_not_exist" function - checks if the literal on the current token is not in the variable dictionary lists.
+# Raises error if the variable doesn't exist.
 
     def var_not_exist(self):
         if self.current_token.literal not in self.var_dict[token.PLACE] and self.current_token.literal not in \
                 self.var_dict[token.TRAN]:
             error(f"Identifier {self.current_token.literal} does not exist.")
 
+# "parsify" function - main function of the Parser class.
+# Iterates through the token list, checks for correct continuity of the tokens.
+# Uses expect function for mandatory tokens and uses case function for multiple cases possibility.
+# The self.state variable acts as a finite automaton state control variable,
+# it can also be viewed as a filter for identifying which token should be next.
+
     def parsify(self):
         declaration_list = list()
         self.state = 0
         while self.next_token().type != token.EOF:
 
+            # Every declaration begins with a certain type of token, depending on which type,
+            # we know the course of tokens that must follow.
+
+            #Instantiation Section
+
             if self.case(0, [token.PLACE, token.TRAN]):
                 type = self.current_token.type
                 varlist = list()
+
+                #Loops through the tokens until a SEMICOLON is found, stores all variables in a list.
 
                 while self.next_token():
 
@@ -130,7 +160,9 @@ class Parser:
                         break
 
                     else:
-                        error("Place Instantiation Error")
+                        error("Instantiation Error")
+
+            # Placefield/Arcing Section
 
             elif self.case(0, token.IDENT):
 
@@ -139,9 +171,14 @@ class Parser:
                 self.expect(token.DOT)
                 self.expect(token.IDENT)
 
+                # Placefield identifier
+
                 if self.current_token.literal in ["amm", "cap"]:
                     type = self.current_token.literal
                     self.state = 1
+
+                # Type of Arcing identifier
+
                 elif self.current_token.literal == "in" and temp in self.var_dict[token.PLACE]:
                     type = "outbound"
                     self.state = 2
@@ -158,6 +195,7 @@ class Parser:
                     type = "inbound"
                     self.state = 2
                     swap = False
+
                 else:
                     error(
                         f"Field Declaration Error. Expected something else after {temp} instead of {self.current_token.literal}.")
@@ -166,6 +204,7 @@ class Parser:
                 self.next_token()
 
                 # Placefield
+
                 if self.case(1, token.INT):
                     val = int(self.current_token.literal)
                     self.expect(token.SEMICOLON)
@@ -173,9 +212,14 @@ class Parser:
                     declaration_list.append(Placefield(type, temp, val))
 
                 # Arcing
+
                 elif self.case(2, token.LBRACE):
                     self.state = 1
                     arclist = list()
+
+                    # Loops through the tokens until RBRACE is found.
+                    # Stores variables and weights in a arclist.
+                    # Sets weight to default value 1.
 
                     while self.next_token():
 
