@@ -1,0 +1,5 @@
+"/Users/cornel/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/223.8836.42/CLion.app/Contents/bin/cmake/mac/bin/cmake" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=/Users/cornel/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/223.8836.42/CLion.app/Contents/bin/ninja/mac/ninja" -G Ninja -S /Users/cornel/CLionProjects/Petri-Nets-DSL -B /Users/cornel/CLionProjects/Petri-Nets-DSL/cmake-build-debug
+-- Configuring done
+CMake Error: CMake can not determine linker language for target: main.c
+-- Generating done
+CMake Generate step failed.  Build files cannot be regenerated correctly.
