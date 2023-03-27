@@ -1,5 +1,14 @@
 import tokens as token
 
+class Token:
+    def __init__(self, type: str, literal: str = None) -> any:
+        self.type = type
+        self.literal = literal
+
+    def __str__(self) -> str:
+        if self.literal:
+            return f'Type {self.type} : Literal {self.literal}'
+        return f'Type {self.type}'
 
 class Tokenizer:
     def __init__(self, input: str) -> any:
@@ -30,7 +39,7 @@ class Tokenizer:
         self.cursor = self.read_cursor
         self.read_cursor += 1
 
-    def next_token(self) -> any:
+    def next_token(self) -> Token:
         tok: Token = Token(token.EOF, "")
         self.consume_whitespace()
 
@@ -85,18 +94,6 @@ class Tokenizer:
     def consume_whitespace(self) -> None:
         while self.ch == ' ' or self.ch == '\t' or self.ch == '\n' or self.ch == '\r':
             self.read_char()
-
-
-class Token:
-    def __init__(self, type: str, literal: str = None) -> any:
-        self.type = type
-        self.literal = literal
-
-    def __str__(self) -> str:
-        if self.literal:
-            return f'Type {self.type} : Literal {self.literal}'
-        return f'Type {self.type}'
-
 
 def is_letter(ch: str) -> bool:
     return 'a' <= ch <= 'z' or 'A' <= ch <= 'Z' or ch == '_'

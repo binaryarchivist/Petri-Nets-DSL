@@ -6,16 +6,15 @@ import pprint
 class TestTokenizer:
     def test_next_token(self) -> any:
         input: str = """
-        place p1, p2;
-        place p3, p4;
+        place p1, p2, p3;
         tran t1, t2;
-        p1.amm = 3;
-        p1.cap = 4;
-        p2.cap = 4;
-        t1.out = {p1 : 2, p2 : 3};
-        p1.out = {t2 : 5};
-        p2.in = {t1, t2};
-        t2.in = {p3, p4};"""
+        p1.amm = 4;
+        p2.amm = 3;
+        p3.cap = 5;
+        t1.in = {p1 : 2, p2 };
+        p3.in = {t1 : 2};
+        p3.out = {t2};
+        """
 
         tokenizer: Tokenizer = Tokenizer(input)
         tok = tokenizer.next_token()
@@ -30,6 +29,17 @@ class TestTokenizer:
 test: TestTokenizer = TestTokenizer()
 
 tokens = test.test_next_token()
+
+string = ''
+for i in tokens:
+    string += f"[{i.type}"
+    if i.literal:
+        string += f":{i.literal}"
+    string += ']'
+print(string)
+
+for i in Parser(tokens).parsify():
+    print(i)
 
 ast: dict = {
     "instantiation": {

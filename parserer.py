@@ -71,7 +71,7 @@ class Parser:
             token.TRAN: list()
         }
 
-# "next_token" function - iterates to the next token from the token list.
+# The next_token method iterates to the next token given and assigns the class attribute current_token to it.
 
     def next_token(self):
         self.cursor += 1
@@ -83,12 +83,10 @@ class Parser:
 
     def expect(self, token):
         temp = self.current_token.type
-        self.next_token()
-        if token:
-            if self.current_token.type in token:
-                pass
-            else:
-                error(f"Expected something else after {temp}.")
+        if self.next_token().type in token:
+            pass
+        else:
+            error(f"Expected something else after {temp}.")
 
 # "case" function - takes in a state variable and a token type string.
 # Returns True or False whether they match with the current state and token type.
