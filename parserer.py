@@ -1,8 +1,7 @@
 from typing import List
-
+import numpy as np
 from tokenizer import Token
 import tokens as token
-
 
 def error(message=None):
     if message:
@@ -36,9 +35,9 @@ class Placefield:
 class Arc:
 
     def __init__(self, source: str, destination: str, val: int):
-        self.source = source
-        self.destination = destination
-        self.val = val
+        self.source: str = source
+        self.destination: str = destination
+        self.val: int = val
 
     def __str__(self):
         return f"Arc: {self.source} {self.destination} {self.val}"
@@ -47,8 +46,8 @@ class Arc:
 class Arcing:
 
     def __init__(self, type: str, arcs: List[Arc]):
-        self.type = type
-        self.arcs = arcs
+        self.type: str = type
+        self.arcs: list[Arc] = arcs
 
     def __str__(self):
         string = f"Arcing: {self.type} ["
@@ -126,7 +125,7 @@ class Parser:
 # it can also be viewed as a filter for identifying which token should be next.
 
     def parsify(self):
-        declaration_list = list()
+        self.declaration_list: list = list()
         self.state = 0
         while self.next_token().type != token.EOF:
 
@@ -153,7 +152,7 @@ class Parser:
 
                     elif self.case(1, token.SEMICOLON):
                         self.state = 0
-                        declaration_list.append(Instantiation(type, varlist))
+                        self.declaration_list.append(Instantiation(type, varlist))
                         self.var_dict[type] += varlist
                         break
 
@@ -207,7 +206,7 @@ class Parser:
                     val = int(self.current_token.literal)
                     self.expect(token.SEMICOLON)
                     self.state = 0
-                    declaration_list.append(Placefield(type, temp, val))
+                    self.declaration_list.append(Placefield(type, temp, val))
 
                 # Arcing
 
@@ -245,13 +244,58 @@ class Parser:
                             error("Arcing Declaration Error.")
 
                     self.expect(token.SEMICOLON)
-                    declaration_list.append(Arcing(type, list(arclist)))
+                    self.declaration_list.append(Arcing(type, list(arclist)))
 
                 else:
                     error("Field Declaration Error. Expected something else after '='.")
             else:
                 error()
-        return declaration_list
+        return self.declaration_list
 
-    def merge_declarations(self):
-        return
+    def build_AST(self):
+        place = dict()
+        places = 0
+        tran = dict()
+        trans = 0
+        arc_in = []
+        arc_out = []
+        for declaration in self.declaration_list:
+
+            if declaration.type == "PLACE":
+                for var in declaration.varlist:
+                    temp_dict = {
+                        "var": var,
+                        "ID": places,
+                        "amm": 0,
+                        "cap": np.infty
+                    }
+                    place[var] = temp_dict
+                    place[places] = temp_dict
+                    places += 1
+
+            elif declaration.type == "TRAN":
+                for var in declaration.varlist:
+                    temp_dict = {
+                        "var": var,
+                        "ID": trans
+                    }
+                    tran[var] = temp_dict
+                    tran[trans] = temp_dict
+                    trans += 1
+
+            elif type(declaration) == Placefield:
+                place[declaration.var][declaration.type] = declaration.val
+
+            elif declaration.type == "inbound":
+                for arc in declaration.arcs:
+                    arc_in.append([place[arc.source]["ID"], tran[arc.destination]["ID"], arc.val])
+            
+            elif declaration.type == "outbound":
+                for arc in declaration.arcs:
+                    arc_out.append([tran[arc.source]["ID"], place[arc.destination]["ID"], arc.val])
+        return {
+            "place": place,
+            "tran": tran,
+            "arc_in": arc_in,
+            "arc_out": arc_out
+        }

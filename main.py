@@ -1,6 +1,6 @@
 from tokenizer import Tokenizer
 from parserer import Parser
-import pprint
+import json
 
 
 class TestTokenizer:
@@ -20,90 +20,30 @@ class TestTokenizer:
         tok = tokenizer.next_token()
         tokens = [tok]
 
+
         while tok.type != 'EOF':
             tok = tokenizer.next_token()
             tokens.append(tok)
         return tokens
 
+def do_everything(input):
+    tokenizer = Tokenizer(input)
+    tok = tokenizer.next_token()
+    tokens = [tok]
+    while tok.type != 'EOF':
+        tok = tokenizer.next_token()
+        tokens.append(tok)
+    parser = Parser(tokens)
+    parser.parsify()
+    return parser.build_AST()
 
-test: TestTokenizer = TestTokenizer()
+# test: TestTokenizer = TestTokenizer()
 
-tokens = test.test_next_token()
+# tokens = test.test_next_token()
 
-string = ''
-for i in tokens:
-    string += f"[{i.type}"
-    if i.literal:
-        string += f":{i.literal}"
-    string += ']'
-print(string)
+# parser = Parser(tokens)
+# for i in parser.parsify():
+#     print(i)
 
-for i in Parser(tokens).parsify():
-    print(i)
-
-ast: dict = {
-    "instantiation": {
-        "place": [],
-        "transition": []
-    },
-    "arcing": {
-        "inbound": [],
-        "outbound": []
-    }
-}
-for i in Parser(tokens).parsify():
-    if i.type == 'PLACE':
-        for var in i.varlist:
-            ast["instantiation"]['place'].append({
-                'name': var,
-                'props': []
-            })
-    elif i.type == 'TRAN':
-        for var in i.varlist:
-            ast["instantiation"]['transition'].append({
-                'name': var,
-                'props': []
-            })
-    elif i.type == 'inbound' or i.type == 'outbound':
-        arcs = []
-        for arc in i.arcs:
-            arcs.append({
-                'source': arc.source,
-                'weight': arc.val,
-                'destination': arc.destination
-            })
-        ast["arcing"][i.type] = arcs
-    elif i.type == 'amm' or i.type == 'cap':
-        for var in ast["instantiation"]["place"]:
-            if i.var == var['name']:
-                var.update({
-                    "props": [
-                        *var["props"],
-                        {
-                            "type": i.type,
-                            "val": i.val
-                        }
-                    ]
-                })
-        for var in ast["instantiation"]["transition"]:
-            if i.var == var['name']:
-                var.update({
-                    "name": var,
-                    "props": [
-                        *var["props"],
-                        {
-                            "type": i.type,
-                            "val": i.val
-                        }
-                    ]
-                })
-
-for child in ast:
-    pprint.pprint(child)
-    for prop in ast[child]:
-        pprint.pprint(prop)
-        pprint.pprint(ast[child][prop])
-
-
-
-
+# AST = parser.build_AST()
+# print(json.dumps(AST, indent=4))
