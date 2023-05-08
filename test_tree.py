@@ -24,11 +24,4 @@ n4.add_subnode(n7)
 n5.add_subnode(n7)
 n6.add_subnode(n8)
 
-final_nodes = []
-for node in root:
-    if len(node.subnodes) == 0 and node not in final_nodes:
-        final_nodes.append(node)
-        print('f')
-        print(node)
-
 print(root.find_paths_to_last_nodes())
