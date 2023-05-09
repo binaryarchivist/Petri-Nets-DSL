@@ -1,5 +1,6 @@
 import numpy as np
 from main import do_everything
+from tree import Node
 
 MAX_DEPTH = 10
 
@@ -47,21 +48,42 @@ def less_tuple(bin_tuple):
     return new_list
 
 def preorder_traversal(node):
-    print(node.depth, node.M)
+    print(node.depth, str_matrix(node.M))
     if node.subnodes:
         for subnode in node.subnodes:
             preorder_traversal(subnode)
 
-class Node:
-    def __init__(self, M: np.matrix, depth = 0, subnodes: list = []):
-        self.M = M
-        self.depth = depth
-        self.subnodes = subnodes
-    def __str__(self):
-        str = ""
-        for i in self.subnodes:
-            str += f"{i.M}"
-        return f"{self.M} - [{str}]"
+def str_matrix(M):
+    matrix_string = "["
+    for i in range(M.size):
+        matrix_string += f"{M.item(i)} "
+    return matrix_string[:-1] + "]"
+
+def matrix_equal(A, B):
+    if A.size != B.size:
+        return False
+    for i in range(A.size):
+        if A.item(i) != B.item(i):
+            return False
+    return True
+
+def matrix_in_list(M, M_list):
+    for i in M_list:
+        if matrix_equal(M,i):
+            return True
+    return False
+
+# class Node:
+#     def __init__(self, M: np.matrix, depth = 0, subnodes: list = []):
+#         self.M = M
+#         self.depth = depth
+#         self.subnodes = subnodes
+#     def __str__(self):
+#         str = ""
+#         for i in self.subnodes:
+#             str += f"{i.M}"
+#         return f"{self.M} - [{str}]"
+    
 
 class PetriNet:
 
@@ -108,47 +130,32 @@ class PetriNet:
                     trans_truth_table[current_tuple] = False
                 for _tuple in less_tuple(current_tuple):
                     analyze_firing(_tuple, trans_truth_table[current_tuple]) 
-            print(trans_truth_table) 
 
         analyze_firing((1,) * self.t, False)
         return [_tuple for _tuple in trans_truth_table if trans_truth_table[_tuple]]
 
     def build_token_tree(self):
-
-        # def recursion_token_tree(M):
-        #     possibilities = self.determine_possibilities(M)
-        #     subnodes = []
-        #     for U in possibilities:
-        #         subnode = M + np.matrix(U) * self.A
-        #         if subnode in evaluated_tokens:
-        #             subnodes.append(Node(subnode))
-        #         else:
-        #             evaluated_tokens.append(subnode)
-        #             subnodes.append(recursion_token_tree(subnode))
-        #     return Node(M, subnodes)
         
-        def breadth_first_token_tree():
-            evaluated_tokens = []
-            first_node = Node(self.M, 0)
-            queue = [first_node]
-            while queue:
-                node = queue.pop(0)
-                if node.M not in evaluated_tokens and node.depth < MAX_DEPTH:
-                    node.subnodes = [Node(node.M + np.matrix(U) * self.A, node.depth+1) for U in self.determine_possibilities(node.M) if node.M + np.matrix(U) * self.A != node.M]
-                    for subnode in node.subnodes:
-                        queue.append(subnode)
-                    evaluated_tokens.append(node.M)
-            return first_node     
-
-        # self.token_tree = recursion_token_tree(self.M)
-        self.token_tree = breadth_first_token_tree()
+        evaluated_tokens = []
+        first_node = Node(M = self.M, depth = 0)
+        queue = [first_node]
+        while queue:
+            node = queue.pop(0)
+            if not matrix_in_list(node.M, evaluated_tokens) and node.depth < MAX_DEPTH:
+                node.subnodes = [Node(M = node.M + np.matrix(U) * self.A, depth = node.depth+1) for U in self.determine_possibilities(node.M) if not matrix_equal(node.M + np.matrix(U) * self.A, node.M)]
+                for subnode in node.subnodes:
+                    queue.append(subnode)
+                evaluated_tokens.append(node.M)
+        self.token_tree = first_node  
 
 input:str = """
-place p1;
-p1.amm = 1;
-tran t1, t2, t3;
-p1.out = {t1, t2};
-p1.in = {t3};
+place p1, p2, p3;
+tran t1, t2;
+p1.amm = 5;
+t1.in = {p1};
+t1.out = {p2};
+t2.in = {p2};
+t2.out = {p3};
 """
 
 AST = do_everything(input)

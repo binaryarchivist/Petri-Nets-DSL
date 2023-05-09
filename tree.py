@@ -1,10 +1,24 @@
 import igraph as ig
 import matplotlib.pyplot as plt
+import numpy as np
+
+def str_matrix(M):
+    matrix_string = "["
+    for i in range(M.size):
+        matrix_string += f"{M.item(i)} "
+    return matrix_string[:-1] + "]"
+
 class Node:
-    def __init__(self, data=None):
-        self.data = data
-        self.subnodes = []
+
+    def __init__(self, M:np.matrix = None, data=None, depth=0, subnodes=[]):
+        if type(M) == np.matrix:
+            self.data = str_matrix(M)  
+        else:
+            self.data = data
+        self.M = M
+        self.subnodes = subnodes
         self._current_iteration_index = -1
+        self.depth = depth
 
     def __iter__(self):
         self._current_iteration_index = -1
