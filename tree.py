@@ -1,3 +1,5 @@
+import igraph as ig
+import matplotlib.pyplot as plt
 class Node:
     def __init__(self, data=None):
         self.data = data
@@ -57,3 +59,27 @@ class Node:
 
         return paths_to_last_nodes
 
+    def to_graph(self, graph=None, parent=None):
+        if graph is None:
+            graph = ig.Graph(directed=True)
+            graph["name"] = []  # add a name attribute to vertices
+
+        # add this node to graph
+        graph.add_vertex(name=self.data)
+
+        # add an edge if this node has a parent
+        if parent is not None:
+            parent_index = graph.vs.find(name=parent).index
+            current_index = graph.vs.find(name=self.data).index
+            graph.add_edge(parent_index, current_index)
+
+        # add subnodes to graph
+        for subnode in self.subnodes:
+            subnode.to_graph(graph, self.data)
+
+        return graph
+
+    def draw_tree(self):
+        graph = self.to_graph()
+        layout = graph.layout_reingold_tilford(mode="in", root=[0])
+        ig.plot(graph, layout=layout)

@@ -1,5 +1,6 @@
 from tokenizer import Tokenizer
 from parserer import Parser
+from tree import Node
 import json
 
 
@@ -47,3 +48,5 @@ def do_everything(input):
 
 # AST = parser.build_AST()
 # print(json.dumps(AST, indent=4))
+
+

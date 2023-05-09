@@ -25,3 +25,5 @@ n5.add_subnode(n7)
 n6.add_subnode(n8)
 
 print(root.find_paths_to_last_nodes())
+
+root.draw_tree()
