@@ -1,6 +1,8 @@
 import numpy as np
 from main import do_everything
 
+MAX_DEPTH = 10
+
 def AST2PetriNet(AST: dict):
     place = AST["place"]
     places = int(len(place)/2)
@@ -28,8 +30,6 @@ def AST2PetriNet(AST: dict):
         trans)
 
 def truth_dict(a: int):
-    if a == 1:
-        return [[0]]
     b = 2**a
     truth_list = dict()
     for i in range(b):
@@ -46,21 +46,27 @@ def less_tuple(bin_tuple):
             new_list.append(tuple(temp))
     return new_list
 
-def preorder_traversal(root):
-    print(root.M)
-    if root.children:
-        for child in root.children:
-            preorder_traversal(child)
+def preorder_traversal(node):
+    print(node.depth, node.M)
+    if node.subnodes:
+        for subnode in node.subnodes:
+            preorder_traversal(subnode)
 
-class Root:
-    def __init__(self, M: np.matrix, children: list =None):
+class Node:
+    def __init__(self, M: np.matrix, depth = 0, subnodes: list = []):
         self.M = M
-        self.children = children
+        self.depth = depth
+        self.subnodes = subnodes
+    def __str__(self):
+        str = ""
+        for i in self.subnodes:
+            str += f"{i.M}"
+        return f"{self.M} - [{str}]"
 
 class PetriNet:
 
     def __init__(self, M: np.matrix, A_P: np.matrix, A_M: np.matrix, C: np.matrix, p, t):
-        self.token_tree: Root
+        self.token_tree: Node
         self.M: np.matrix = M
         self.A_P: np.matrix = A_P
         self.A_M: np.matrix = A_M
@@ -101,36 +107,48 @@ class PetriNet:
                 else:
                     trans_truth_table[current_tuple] = False
                 for _tuple in less_tuple(current_tuple):
-                    analyze_firing(_tuple, trans_truth_table[current_tuple])  
+                    analyze_firing(_tuple, trans_truth_table[current_tuple]) 
+            print(trans_truth_table) 
 
         analyze_firing((1,) * self.t, False)
         return [_tuple for _tuple in trans_truth_table if trans_truth_table[_tuple]]
 
     def build_token_tree(self):
-        evaluated_tokens = [self.M]
-        queue = [self.M]
 
-        def recursion_token_tree(M):
-            possibilities = self.determine_possibilities(M)
-            children = []
-            if possibilities:
-                for U in possibilities:
-                    child = M + np.matrix(U) * self.A
-                    queue.append(child)
-                    if child in evaluated_tokens:
-                        children.append(Root(child))
-                    else:
-                        evaluated_tokens.append(child)
-                        children.append(recursion_token_tree(child))
-            return Root(M, children)
+        # def recursion_token_tree(M):
+        #     possibilities = self.determine_possibilities(M)
+        #     subnodes = []
+        #     for U in possibilities:
+        #         subnode = M + np.matrix(U) * self.A
+        #         if subnode in evaluated_tokens:
+        #             subnodes.append(Node(subnode))
+        #         else:
+        #             evaluated_tokens.append(subnode)
+        #             subnodes.append(recursion_token_tree(subnode))
+        #     return Node(M, subnodes)
         
-        self.token_tree = recursion_token_tree(self.M)
+        def breadth_first_token_tree():
+            evaluated_tokens = []
+            first_node = Node(self.M, 0)
+            queue = [first_node]
+            while queue:
+                node = queue.pop(0)
+                if node.M not in evaluated_tokens and node.depth < MAX_DEPTH:
+                    node.subnodes = [Node(node.M + np.matrix(U) * self.A, node.depth+1) for U in self.determine_possibilities(node.M) if node.M + np.matrix(U) * self.A != node.M]
+                    for subnode in node.subnodes:
+                        queue.append(subnode)
+                    evaluated_tokens.append(node.M)
+            return first_node     
+
+        # self.token_tree = recursion_token_tree(self.M)
+        self.token_tree = breadth_first_token_tree()
 
 input:str = """
 place p1;
-tran t1, t2;
 p1.amm = 1;
-p1.out = {t1,t2};
+tran t1, t2, t3;
+p1.out = {t1, t2};
+p1.in = {t3};
 """
 
 AST = do_everything(input)
