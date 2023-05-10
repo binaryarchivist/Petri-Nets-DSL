@@ -1,8 +1,20 @@
 import numpy as np
-from main import do_everything
 from tree import Node
+from tokenizer import Tokenizer
+from parserer import Parser
 
-MAX_DEPTH = 10
+DEFAULT_MAX_DEPTH = 10
+
+def do_everything(input):
+    tokenizer = Tokenizer(input)
+    tok = tokenizer.next_token()
+    tokens = [tok]
+    while tok.type != 'EOF':
+        tok = tokenizer.next_token()
+        tokens.append(tok)
+    parser = Parser(tokens)
+    parser.parsify()
+    return parser.build_AST()
 
 def AST2PetriNet(AST: dict):
     place = AST["place"]
@@ -47,12 +59,6 @@ def less_tuple(bin_tuple):
             new_list.append(tuple(temp))
     return new_list
 
-def preorder_traversal(node):
-    print(node.depth, str_matrix(node.M))
-    if node.subnodes:
-        for subnode in node.subnodes:
-            preorder_traversal(subnode)
-
 def str_matrix(M):
     matrix_string = "["
     for i in range(M.size):
@@ -72,17 +78,6 @@ def matrix_in_list(M, M_list):
         if matrix_equal(M,i):
             return True
     return False
-
-# class Node:
-#     def __init__(self, M: np.matrix, depth = 0, subnodes: list = []):
-#         self.M = M
-#         self.depth = depth
-#         self.subnodes = subnodes
-#     def __str__(self):
-#         str = ""
-#         for i in self.subnodes:
-#             str += f"{i.M}"
-#         return f"{self.M} - [{str}]"
     
 
 class PetriNet:
@@ -116,7 +111,6 @@ class PetriNet:
         return True
 
     def determine_possibilities(self, M: np.matrix):
-        trans_truth_table = truth_dict(self.t)
 
         def analyze_firing(current_tuple, root_state):
             if root_state:
@@ -131,37 +125,23 @@ class PetriNet:
                 for _tuple in less_tuple(current_tuple):
                     analyze_firing(_tuple, trans_truth_table[current_tuple]) 
 
+        trans_truth_table = truth_dict(self.t)
         analyze_firing((1,) * self.t, False)
-        return [_tuple for _tuple in trans_truth_table if trans_truth_table[_tuple]]
+        return [np.matrix(_tuple) for _tuple in trans_truth_table if trans_truth_table[_tuple]]
 
-    def build_token_tree(self):
-        
+    def build_token_tree(self, allow_reoccuring_tokens=False, max_depth=DEFAULT_MAX_DEPTH, show_occuring_transitions=False):
         evaluated_tokens = []
-        first_node = Node(M = self.M, depth = 0)
+        first_node = Node(M=self.M, depth=0, data=str_matrix(self.M))
         queue = [first_node]
         while queue:
             node = queue.pop(0)
-            if not matrix_in_list(node.M, evaluated_tokens) and node.depth < MAX_DEPTH:
-                node.subnodes = [Node(M = node.M + np.matrix(U) * self.A, depth = node.depth+1) for U in self.determine_possibilities(node.M) if not matrix_equal(node.M + np.matrix(U) * self.A, node.M)]
+            if (not matrix_in_list(node.M, evaluated_tokens) or allow_reoccuring_tokens) and node.depth < max_depth:
+                if show_occuring_transitions:
+                    node.subnodes = [Node(M=node.M+U*self.A, depth=node.depth+1, data=str_matrix(node.M+U*self.A)+str_matrix(U)) for U in self.determine_possibilities(node.M) if not matrix_equal(node.M+U*self.A, node.M)]
+                else:
+                    node.subnodes = [Node(M=node.M+U*self.A, depth=node.depth+1, data=str_matrix(node.M+U*self.A)) for U in self.determine_possibilities(node.M) if not matrix_equal(node.M+U*self.A, node.M)]
                 for subnode in node.subnodes:
                     queue.append(subnode)
                 evaluated_tokens.append(node.M)
         self.token_tree = first_node  
-
-input:str = """
-place p1, p2, p3;
-tran t1, t2;
-p1.amm = 5;
-t1.in = {p1};
-t1.out = {p2};
-t2.in = {p2};
-t2.out = {p3};
-"""
-
-AST = do_everything(input)
-
-tb = truth_dict(4)
-
-petrinet = AST2PetriNet(AST)
-petrinet.build_token_tree()
-preorder_traversal(petrinet.token_tree)
+        return first_node

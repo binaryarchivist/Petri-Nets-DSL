@@ -11,10 +11,7 @@ def str_matrix(M):
 class Node:
 
     def __init__(self, M:np.matrix = None, data=None, depth=0, subnodes=[]):
-        if type(M) == np.matrix:
-            self.data = str_matrix(M)  
-        else:
-            self.data = data
+        self.data = data
         self.M = M
         self.subnodes = subnodes
         self._current_iteration_index = -1
@@ -97,3 +94,15 @@ class Node:
         graph = self.to_graph()
         layout = graph.layout_reingold_tilford(mode="in", root=[0])
         ig.plot(graph, layout=layout)
+
+    def prepare_for_treelib(self):
+
+        def preorder_traversal(node: Node, number):
+            # node.data = str_matrix(node.M)
+            node._current_iteration_index = number
+            for subnode in node.subnodes:
+                number += 1
+                number = preorder_traversal(subnode, number)
+            return number
+        
+        preorder_traversal(self, 0)

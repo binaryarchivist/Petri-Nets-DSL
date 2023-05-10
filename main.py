@@ -1,6 +1,8 @@
 from tokenizer import Tokenizer
 from parserer import Parser
 from tree import Node
+from logic import do_everything,AST2PetriNet
+from treelib import Tree
 import json
 
 
@@ -27,26 +29,33 @@ class TestTokenizer:
             tokens.append(tok)
         return tokens
 
-def do_everything(input):
-    tokenizer = Tokenizer(input)
-    tok = tokenizer.next_token()
-    tokens = [tok]
-    while tok.type != 'EOF':
-        tok = tokenizer.next_token()
-        tokens.append(tok)
-    parser = Parser(tokens)
-    parser.parsify()
-    return parser.build_AST()
+def show_token_tree(input):
 
-# test: TestTokenizer = TestTokenizer()
+    def recursion(node: Node):
+        for subnode in node.subnodes:
+            tree.create_node(subnode.data, subnode._current_iteration_index, parent = node._current_iteration_index)
+            recursion(subnode)
 
-# tokens = test.test_next_token()
+    AST = do_everything(input)
+    print(AST["places"])
+    print(AST["trans"])
+    petrinet = AST2PetriNet(AST)
+    token_tree: Node = petrinet.build_token_tree(allow_reoccuring_tokens=True)
+    token_tree.prepare_for_treelib()
+    tree = Tree()
+    tree.create_node(token_tree.data, 0)
+    recursion(token_tree)
+    tree.show()
 
-# parser = Parser(tokens)
-# for i in parser.parsify():
-#     print(i)
+input = """
+place source, distributer, collector1, collector2;
+tran connector, receiver1, receiver2;
+source.amm = 5;
+source.out = {connector};
+connector.out = {distributer};
+distributer.out = {receiver1, receiver2};
+collector1.in = {receiver1};
+collector2.in = {receiver2};
+"""
 
-# AST = parser.build_AST()
-# print(json.dumps(AST, indent=4))
-
-
+show_token_tree(input)

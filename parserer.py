@@ -254,9 +254,11 @@ class Parser:
 
     def build_AST(self):
         place = dict()
-        places = 0
+        places_amm = 0
+        places = []
         tran = dict()
-        trans = 0
+        trans_amm = 0
+        trans = []
         arc_in = []
         arc_out = []
         for declaration in self.declaration_list:
@@ -265,23 +267,25 @@ class Parser:
                 for var in declaration.varlist:
                     temp_dict = {
                         "var": var,
-                        "ID": places,
+                        "ID": places_amm,
                         "amm": 0,
                         "cap": np.infty
                     }
                     place[var] = temp_dict
-                    place[places] = temp_dict
-                    places += 1
+                    place[places_amm] = temp_dict
+                    places.append(var)
+                    places_amm += 1
 
             elif declaration.type == "TRAN":
                 for var in declaration.varlist:
                     temp_dict = {
                         "var": var,
-                        "ID": trans
+                        "ID": trans_amm
                     }
                     tran[var] = temp_dict
-                    tran[trans] = temp_dict
-                    trans += 1
+                    tran[trans_amm] = temp_dict
+                    trans.append(var)
+                    trans_amm += 1
 
             elif type(declaration) == Placefield:
                 place[declaration.var][declaration.type] = declaration.val
@@ -297,5 +301,7 @@ class Parser:
             "place": place,
             "tran": tran,
             "arc_in": arc_in,
-            "arc_out": arc_out
+            "arc_out": arc_out,
+            "places": places,
+            "trans": trans
         }
