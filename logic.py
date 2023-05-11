@@ -129,13 +129,13 @@ class PetriNet:
         analyze_firing((1,) * self.t, False)
         return [np.matrix(_tuple) for _tuple in trans_truth_table if trans_truth_table[_tuple]]
 
-    def build_token_tree(self, allow_reoccuring_tokens=False, max_depth=DEFAULT_MAX_DEPTH, show_occuring_transitions=False):
+    def build_token_tree(self, allow_reoccuring_tokens=False, _max_depth=DEFAULT_MAX_DEPTH, show_occuring_transitions=False):
         evaluated_tokens = []
         first_node = Node(M=self.M, depth=0, data=str_matrix(self.M))
         queue = [first_node]
         while queue:
             node = queue.pop(0)
-            if (not matrix_in_list(node.M, evaluated_tokens) or allow_reoccuring_tokens) and node.depth < max_depth:
+            if (not matrix_in_list(node.M, evaluated_tokens) or allow_reoccuring_tokens) and node.depth < _max_depth:
                 if show_occuring_transitions:
                     node.subnodes = [Node(M=node.M+U*self.A, depth=node.depth+1, data=str_matrix(node.M+U*self.A)+str_matrix(U)) for U in self.determine_possibilities(node.M) if not matrix_equal(node.M+U*self.A, node.M)]
                 else:

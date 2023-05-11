@@ -5,31 +5,7 @@ from logic import do_everything,AST2PetriNet
 from treelib import Tree
 import json
 
-
-class TestTokenizer:
-    def test_next_token(self) -> any:
-        input: str = """
-        place p1, p2, p3;
-        tran t1, t2;
-        p1.amm = 4;
-        p2.amm = 3;
-        p3.cap = 5;
-        t1.in = {p1 : 2, p2 };
-        p3.in = {t1 : 2};
-        p3.out = {t2};
-        """
-
-        tokenizer: Tokenizer = Tokenizer(input)
-        tok = tokenizer.next_token()
-        tokens = [tok]
-
-
-        while tok.type != 'EOF':
-            tok = tokenizer.next_token()
-            tokens.append(tok)
-        return tokens
-
-def show_token_tree(input):
+def show_token_tree(input, max_depth=10):
 
     def recursion(node: Node):
         for subnode in node.subnodes:
@@ -40,22 +16,43 @@ def show_token_tree(input):
     print(AST["places"])
     print(AST["trans"])
     petrinet = AST2PetriNet(AST)
-    token_tree: Node = petrinet.build_token_tree(allow_reoccuring_tokens=True)
+    token_tree: Node = petrinet.build_token_tree(allow_reoccuring_tokens=False, _max_depth=max_depth, show_occuring_transitions=False)
     token_tree.prepare_for_treelib()
     tree = Tree()
     tree.create_node(token_tree.data, 0)
     recursion(token_tree)
     tree.show()
 
-input = """
-place source, distributer, collector1, collector2;
-tran connector, receiver1, receiver2;
-source.amm = 5;
-source.out = {connector};
-connector.out = {distributer};
-distributer.out = {receiver1, receiver2};
-collector1.in = {receiver1};
-collector2.in = {receiver2};
+
+
+# input1 = """
+# place p1, p2;
+# p1.amm = 10;
+# tran t1;
+# t1.in = {p1:2};
+# t1.out = {p2};
+# """
+#
+# show_token_tree(input1)
+
+# input2 = """
+# place p1, p2, p3, p4;
+# p1.amm = 1;
+# tran t1, t2, t3;
+# t1.in = {p1};
+# t1.out = {p2,p3};
+# t2.in = {p2,p3};
+# t2.out = {p4};
+# t3.in = {p4};
+# t3.out = {p1};
+# """
+#
+# show_token_tree(input2)
+#
+input3 = """
+place p1;
+tran t1;
+t1.out = {p1};
 """
 
-show_token_tree(input)
+show_token_tree(input3, max_depth=30)
